@@ -1,13 +1,15 @@
-source "https://rubygems.org"
+# frozen_string_literal: true
+
+source 'https://rubygems.org'
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
 # used to test gems from different targets
-gem "sqlite3"
+gem 'sqlite3'
 
 # A phony gem used to test local gem in bundler
-gem "phony_gem", path: "lib/phony_gem"
+gem 'phony_gem', path: 'lib/phony_gem'
 
 # git source
-gem "apparition",
-  github: "twalpole/apparition",
-  ref: "ca86be4d54af835d531dbcd2b86e7b2c77f85f34"
+gem 'apparition',
+    github: 'twalpole/apparition',
+    ref: 'ca86be4d54af835d531dbcd2b86e7b2c77f85f34'

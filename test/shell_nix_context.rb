@@ -1,5 +1,7 @@
-require "minitest/autorun"
-require "bundix"
+# frozen_string_literal: true
+
+require 'minitest/autorun'
+require 'bundix'
 
 class TestShellNixContext < Minitest::Test
   def test_commandline_populates_context

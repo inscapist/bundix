@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "phony_gem/version"
+require_relative 'phony_gem/version'
 
 module PhonyGem
   class Error < StandardError; end

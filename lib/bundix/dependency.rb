@@ -1,4 +1,6 @@
-require "bundler"
+# frozen_string_literal: true
+
+require 'bundler'
 
 class Dependency < Bundler::Dependency
   def initialize(name, version, options = {}, &blk)
@@ -23,31 +25,34 @@ def parse_gemfiles(gemfile, lockfile)
     deps[spec.name] ||= Dependency.new(spec.name, nil, {})
   end
 
-  begin
+  loop do
     changed = false
     lock.specs.each do |spec|
       as_dep = deps.fetch(spec.name)
 
       spec.dependencies.each do |dep|
         cached = deps.fetch(dep.name) do |name|
-          if name != "bundler"
-            raise KeyError, "Gem dependency '#{name}' not specified in #{lockfile}"
+          if name != 'bundler'
+            raise KeyError,
+                  "Gem dependency '#{name}' not specified in #{lockfile}"
           end
+
           deps[name] = Dependency.new(name, lock.bundler_version, {})
         end
 
-        if !((as_dep.groups - cached.groups) - [:default]).empty? or !(as_dep.platforms - cached.platforms).empty?
-          changed = true
-          deps[cached.name] = (Dependency.new(cached.name, nil, {
-            "group" => as_dep.groups | cached.groups,
-            "platforms" => as_dep.platforms | cached.platforms,
-          }))
-
-          cc = deps[cached.name]
+        unless !((as_dep.groups - cached.groups) - [:default]).empty? || !(as_dep.platforms - cached.platforms).empty?
+          next
         end
+
+        changed = true
+        deps[cached.name] = Dependency.new(cached.name, nil, {
+                                             'group' => as_dep.groups | cached.groups,
+                                             'platforms' => as_dep.platforms | cached.platforms
+                                           })
       end
     end
-  end while changed
+    break unless changed
+  end
 
-  return deps, lock
+  [deps, lock]
 end

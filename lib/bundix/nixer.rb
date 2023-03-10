@@ -1,15 +1,15 @@
-require "erb"
+# frozen_string_literal: true
+
+require 'erb'
 
 class Hash
   # regretfully, duckpunching
   def <=>(other)
-    if other.is_a?(Hash)
-      larray = to_a.sort { |l, r| Bundix::Nixer.order(l, r) }
-      rarray = other.to_a.sort { |l, r| Bundix::Nixer.order(l, r) }
-      larray <=> rarray
-    else
-      nil
-    end
+    return unless other.is_a?(Hash)
+
+    larray = to_a.sort { |l, r| Bundix::Nixer.order(l, r) }
+    rarray = other.to_a.sort { |l, r| Bundix::Nixer.order(l, r) }
+    larray <=> rarray
   end
 end
 
@@ -21,25 +21,20 @@ class Bundix
       end
 
       def order(left, right)
-        if right.is_a?(left.class)
-          if right.respond_to?(:<=>)
-            cmp = right <=> left
-            return -1 * (cmp) unless cmp.nil?
-          end
+        if right.is_a?(left.class) && right.respond_to?(:<=>)
+          cmp = right <=> left
+          return -1 * cmp unless cmp.nil?
         end
 
-        if left.is_a?(right.class)
-          if left.respond_to?(:<=>)
-            cmp = right <=> left
-            if cmp.nil?
-              return class_order(left, right)
-            else
-              return cmp
-            end
-          end
+        if left.is_a?(right.class) && left.respond_to?(:<=>)
+          cmp = right <=> left
+          return class_order(left, right) if cmp.nil?
+
+          return cmp
+
         end
 
-        return class_order(left, right)
+        class_order(left, right)
       end
 
       def class_order(left, right)
@@ -49,8 +44,8 @@ class Bundix
 
     attr_reader :level, :obj
 
-    SET_T = ERB.new(File.read(File.expand_path("../../template/nixer/set.erb", __dir__)).chomp)
-    LIST_T = ERB.new(File.read(File.expand_path("../../template/nixer/list.erb", __dir__)).chomp)
+    SET_T = ERB.new(File.read(File.expand_path('../../template/nixer/set.erb', __dir__)).chomp)
+    LIST_T = ERB.new(File.read(File.expand_path('../../template/nixer/list.erb', __dir__)).chomp)
 
     def initialize(obj, level = 0)
       @obj = obj
@@ -58,11 +53,11 @@ class Bundix
     end
 
     def indent
-      " " * (level + 2)
+      ' ' * (level + 2)
     end
 
     def outdent
-      " " * level
+      ' ' * level
     end
 
     def sub(obj, indent = 0)
@@ -80,26 +75,26 @@ class Bundix
     def serialize
       case obj
       when Hash
-        return SET_T.result(binding)
+        SET_T.result(binding)
       when Array
-        return LIST_T.result(binding)
+        LIST_T.result(binding)
       when String
         obj.dump
       when Symbol
         obj.to_s.dump
       when Pathname
         str = obj.to_s
-        if %r{/} !~ str
-          "./" + str
-        else
+        if %r{/} =~ str
           str
+        else
+          "./#{str}"
         end
       when true, false
         obj.to_s
       when nil
-        "null"
+        'null'
       else
-        fail "Cannot convert to nix: #{obj.inspect}"
+        raise "Cannot convert to nix: #{obj.inspect}"
       end
     end
   end

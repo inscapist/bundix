@@ -1,42 +1,43 @@
-require "json"
-require "open-uri"
-require "open3"
-require "pp"
+# frozen_string_literal: true
 
-require_relative "bundix/dependency"
-require_relative "bundix/version"
-require_relative "bundix/source"
-require_relative "bundix/nixer"
+require 'json'
+require 'open-uri'
+require 'open3'
 
-PLATFORM_MAPPING = {}
+require_relative 'bundix/dependency'
+require_relative 'bundix/version'
+require_relative 'bundix/source'
+require_relative 'bundix/nixer'
+
+platform_mapping = {}
 
 {
-  "ruby" => [{ engine: "ruby" }, { engine: "rbx" }, { engine: "maglev" }],
-  "mri" => [{ engine: "ruby" }, { engine: "maglev" }],
-  "rbx" => [{ engine: "rbx" }],
-  "jruby" => [{ engine: "jruby" }],
-  "mswin" => [{ engine: "mswin" }],
-  "mswin64" => [{ engine: "mswin64" }],
-  "mingw" => [{ engine: "mingw" }],
-  "truffleruby" => [{ engine: "ruby" }],
-  "x64_mingw" => [{ engine: "mingw" }],
+  'ruby' => [{ engine: 'ruby' }, { engine: 'rbx' }, { engine: 'maglev' }],
+  'mri' => [{ engine: 'ruby' }, { engine: 'maglev' }],
+  'rbx' => [{ engine: 'rbx' }],
+  'jruby' => [{ engine: 'jruby' }],
+  'mswin' => [{ engine: 'mswin' }],
+  'mswin64' => [{ engine: 'mswin64' }],
+  'mingw' => [{ engine: 'mingw' }],
+  'truffleruby' => [{ engine: 'ruby' }],
+  'x64_mingw' => [{ engine: 'mingw' }]
 }.each do |name, list|
-  PLATFORM_MAPPING[name] = list
-  %w(1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 3.0 3.1 3.2).each do |version|
-    PLATFORM_MAPPING["#{name}_#{version.sub(/[.]/, "")}"] = list.map do |platform|
-      platform.merge(:version => version)
+  platform_mapping[name] = list
+  %w[1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 3.0 3.1 3.2].each do |version|
+    platform_mapping["#{name}_#{version.sub(/[.]/, '')}"] = list.map do |platform|
+      platform.merge(version: version)
     end
   end
 end
 
 class Bundix
-  NIX_INSTANTIATE = "nix-instantiate"
-  NIX_PREFETCH_URL = "nix-prefetch-url"
-  NIX_PREFETCH_GIT = "nix-prefetch-git"
-  NIX_HASH = "nix-hash"
-  NIX_SHELL = "nix-shell"
+  NIX_INSTANTIATE = 'nix-instantiate'
+  NIX_PREFETCH_URL = 'nix-prefetch-url'
+  NIX_PREFETCH_GIT = 'nix-prefetch-git'
+  NIX_HASH = 'nix-hash'
+  NIX_SHELL = 'nix-shell'
 
-  SHA256_32 = %r(^[a-z0-9]{52}$)
+  SHA256_32 = /^[a-z0-9]{52}$/.freeze
 
   attr_reader :options, :old_gemset
   attr_accessor :fetcher
@@ -44,9 +45,9 @@ class Bundix
   def self.sh(*args, &block)
     out, status = Open3.capture2(*args)
     unless block_given? ? block.call(status, out) : status.success?
-      puts "$ #{args.join(" ")}" if $VERBOSE
+      puts "$ #{args.join(' ')}" if $VERBOSE
       puts out if $VERBOSE
-      fail "command execution failed: #{status}"
+      raise "command execution failed: #{status}"
     end
     out
   end
@@ -67,31 +68,29 @@ class Bundix
     lock.specs.each do |spec|
       gem = cached_gemspec(spec) || build_gemspec(spec, deps)
       # gem = build_gemspec(spec, deps)
-      if spec.dependencies.any?
-        gem["dependencies"] = spec.dependencies.map(&:name) - ["bundler"]
-      end
+      gem['dependencies'] = spec.dependencies.map(&:name) - ['bundler'] if spec.dependencies.any?
       gems[spec.name] << gem
     end
 
-    gems.map do |name, variants|
+    gems.to_h do |name, variants|
       primary = nil
       targets = []
       variants.each do |v|
-        target = v.dig("source", "target")
-        if target == "ruby" or target.nil?
+        target = v.dig('source', 'target')
+        if (target == 'ruby') || target.nil?
           primary = v
-          primary["source"]["target"] = "ruby" if target.nil?
+          primary['source']['target'] = 'ruby' if target.nil?
         else
-          targets << v["source"]
+          targets << v['source']
         end
       end
       if primary.nil?
         spec = variants.first.clone
-        spec["source"] = nil
+        spec['source'] = nil
         primary = spec
       end
-      [name, primary.merge("targets" => targets)]
-    end.to_h
+      [name, primary.merge('targets' => targets)]
+    end
   end
 
   private
@@ -100,50 +99,53 @@ class Bundix
     [platforms(spec, deps),
      groups(spec, deps),
      Source.new(spec, fetcher).convert].inject(&:merge)
-  rescue => ex
-    warn "Skipping #{spec.name}: #{ex}"
-    puts ex.backtrace
+  rescue StandardError => e
+    warn "Skipping #{spec.name}: #{e}"
+    puts e.backtrace
     {}
   end
 
   def cached_gemspec(spec)
-    _, cached = old_gemset.find { |k, v|
+    _, cached = old_gemset.find do |k, v|
       next unless k == spec.name
-      next unless cached_source = v["source"]
+      next unless (cached_source = v['source'])
 
       case spec_source = spec.source
       when Bundler::Source::Git
-        next unless cached_source["type"] == "git"
-        next unless cached_rev = cached_source["rev"]
-        next unless spec_rev = spec_source.options["revision"]
+        next unless cached_source['type'] == 'git'
+        next unless (cached_rev = cached_source['rev'])
+        next unless (spec_rev = spec_source.options['revision'])
+
         spec_rev == cached_rev
       when Bundler::Source::Rubygems
-        next unless cached_source["type"] == "gem"
-        v["version"] == spec.version.to_s
+        next unless cached_source['type'] == 'gem'
+
+        v['version'] == spec.version.to_s
       end
-    }
+    end
 
     cached
   end
 
   def groups(spec, deps)
-    { "groups" => deps.fetch(spec.name).groups.map(&:to_s) }
+    { 'groups' => deps.fetch(spec.name).groups.map(&:to_s) }
   end
 
   def platforms(spec, deps)
     # c.f. Bundler::CurrentRuby
     platforms = deps.fetch(spec.name).platforms.map do |platform_name|
-      PLATFORM_MAPPING[platform_name.to_s]
+      platform_mapping[platform_name.to_s]
     end.flatten
 
-    { "platforms" => platforms }
+    { 'platforms' => platforms }
   end
 
   # Read existing gemset.nix if exists to reuse the computed hash
   def parse_gemset
     path = File.expand_path(options[:gemset])
     return {} unless File.file?(path)
-    json = Bundix.sh(NIX_INSTANTIATE, "--eval", "-E", %(
+
+    json = Bundix.sh(NIX_INSTANTIATE, '--eval', '-E', %(
       builtins.toJSON (import #{Nixer.serialize(path)})))
     JSON.parse(json.strip.gsub(/\\"/, '"')[1..-2])
   end
