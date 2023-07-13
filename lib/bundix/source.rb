@@ -105,7 +105,7 @@ class Bundix
           next unless spec.platform =~ platform
         end
 
-        hash = nix_prefetch_url(path)[SHA256_32]
+        hash = nix_prefetch_url(path)
         return format_hash(hash), platform if hash
       end
 
