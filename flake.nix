@@ -27,7 +27,8 @@
       bundler = pkgs.bundler.override { ruby = rubyCurrent; };
 
       bundix = pkgs.callPackage ./default.nix {
-        inherit pkgs ruby bundler;
+        ruby = rubyCurrent;
+        inherit pkgs bundler;
         inherit (pkgs) nix nix-prefetch-git;
       };
     in {
