@@ -82,6 +82,13 @@ class Bundix
       end
     end
 
+    def test_format_hash_matches_nix_output
+      fetcher = Bundix::Fetcher.new
+      hex = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      assert_equal("1vydmf4nfi9307pwvaw9cx2j60ggrnmqjrs54c0yzkdbi5kla8q1", fetcher.format_hash(hex))
+      assert_equal("0" * 52, fetcher.format_hash("00" * 32))
+    end
+
     private
 
     def with_dir(bundler_credential:)

@@ -112,8 +112,21 @@ class Bundix
       ENV["HOME"] = home
     end
 
+    NIX_BASE32 = "0123456789abcdfghijklmnpqrsvwxyz".freeze
+
     def format_hash(hash)
-      sh(NIX_HASH, "--type", "sha256", "--to-base32", hash)[SHA256_32]
+      expected_length = (hash.length * 4 + 4) / 5
+      return "0" * expected_length if hash =~ /\A0+\z/
+
+      value = hash.scan(/../).reverse.join.to_i(16)
+      out = +""
+
+      while value.positive?
+        out << NIX_BASE32[value & 0x1f]
+        value >>= 5
+      end
+
+      out.reverse.rjust(expected_length, "0")
     end
 
     def fetch_local_hash(spec)

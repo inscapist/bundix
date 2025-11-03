@@ -18,7 +18,7 @@
     eachDefaultSystem (system: let
       pkgs = nixpkgs.legacyPackages.${system};
 
-      rubyCurrent = pkgs.ruby_3_1;
+      rubyCurrent = pkgs.ruby_3_3;
 
       ruby = rubyCurrent.withPackages (ps: with ps; [
         minitest rake solargraph rubocop pry

@@ -24,7 +24,7 @@ PLATFORM_MAPPING = {
   'windows' => [{ engine: 'mswin' }, { engine: 'mswin64' }, { engine: 'mingw' }]
 }.each_with_object({}) do |(name, list), mappings|
   mappings[name] = list
-  %w[1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 3.0 3.1 3.2].each do |version|
+  %w[1.8 1.9 2.0 2.1 2.2 2.3 2.4 2.5 2.6 2.7 3.0 3.1 3.2 3.3].each do |version|
     mappings["#{name}_#{version.sub(/[.]/, '')}"] = list.map do |platform|
       platform.merge(version: version)
     end

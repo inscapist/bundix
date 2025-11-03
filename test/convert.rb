@@ -15,6 +15,15 @@ class TestConvert < Minitest::Test
       JSON.generate('sha256' => format_hash(Digest::SHA256.hexdigest(args.to_s)))
     end
 
+    def fetch_remote_hash(spec, remote)
+      hash = Digest::SHA256.hexdigest([remote, spec.full_name].join("::"))
+      [hash, spec.platform&.to_s]
+    end
+
+    def spec_for_dependency(_remote, dependency)
+      dependency
+    end
+
     def fetch_local_hash(_spec)
       # Force to use fetch_remote_hash
       nil
