@@ -115,18 +115,29 @@ class Bundix
     NIX_BASE32 = "0123456789abcdfghijklmnpqrsvwxyz".freeze
 
     def format_hash(hash)
-      expected_length = (hash.length * 4 + 4) / 5
-      return "0" * expected_length if hash =~ /\A0+\z/
+      value = hash.to_s.strip.downcase
+      hex_re = /\A[0-9a-f]+\z/
+      nix_base32_re = /\A[#{NIX_BASE32}]+\z/
 
-      value = hash.scan(/../).reverse.join.to_i(16)
-      out = +""
+      if value.match?(hex_re)
+        expected_length = (value.length * 4 + 4) / 5
+        return "0" * expected_length if value.match?(/\A0+\z/)
 
-      while value.positive?
-        out << NIX_BASE32[value & 0x1f]
-        value >>= 5
+        # reverse-bytes before integer conversion to match nix tooling
+        int_value = value.scan(/../).reverse.join.to_i(16)
+        out = +""
+
+        while int_value.positive?
+          out << NIX_BASE32[int_value & 0x1f]
+          int_value >>= 5
+        end
+
+        out.reverse.rjust(expected_length, "0")
+      elsif value.match?(nix_base32_re)
+        value
+      else
+        raise "Unsupported hash format: #{hash.inspect}"
       end
-
-      out.reverse.rjust(expected_length, "0")
     end
 
     def fetch_local_hash(spec)

@@ -87,6 +87,8 @@ class Bundix
       hex = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
       assert_equal("1vydmf4nfi9307pwvaw9cx2j60ggrnmqjrs54c0yzkdbi5kla8q1", fetcher.format_hash(hex))
       assert_equal("0" * 52, fetcher.format_hash("00" * 32))
+      base32 = "0ssi1wpaf7plasw6jc9z5lvvdm45i7ic3c7a8c8ars9m8w2zrl8a"
+      assert_equal(base32, fetcher.format_hash(base32))
     end
 
     private
