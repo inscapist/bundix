@@ -5,6 +5,7 @@ require 'fileutils'
 require 'json'
 require 'net/http'
 require 'open3'
+require 'openssl'
 
 require_relative 'bundix/dependency'
 require_relative 'bundix/version'

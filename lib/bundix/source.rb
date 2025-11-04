@@ -18,13 +18,25 @@ class Bundix
           inject_credentials_from_bundler_settings(uri)
         end
 
-        Net::HTTP.start(uri.host, uri.port, use_ssl: (uri.scheme == 'https')) do |http|
+        http = Net::HTTP.new(uri.host, uri.port)
+        http.use_ssl = (uri.scheme == 'https')
+        if http.use_ssl?
+          http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+          http.verify_callback = lambda do |preverify_ok, store_context|
+            # OpenSSL 3.2.3+ enforces CRL retrieval by default, which fails for
+            # Rubygems' certificate chain. Treat "unable to get certificate CRL"
+            # as non-fatal so TLS still succeeds.
+            preverify_ok || store_context&.error == OpenSSL::X509::V_ERR_UNABLE_TO_GET_CRL
+          end
+        end
+
+        http.start do |connection|
           request = Net::HTTP::Get.new(uri)
           if uri.user
             request.basic_auth(uri.user, uri.password)
           end
 
-          http.request(request) do |resp|
+          connection.request(request) do |resp|
             case resp
             when Net::HTTPOK
               File.open(file, 'wb+') do |local|
