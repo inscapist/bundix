@@ -74,6 +74,11 @@ class TestConvert < Minitest::Test
     # test window alias expansion
     actual_targets = gemset.dig('io-console', 'platforms').map { |h| h.values.first }.sort
     assert_equal(actual_targets, %w[maglev mingw mswin mswin64 ruby])
+
+    # test group propagation
+    assert_equal(gemset.dig('bindex', 'groups'), ['development'])
+    assert_equal(gemset.dig('rexml', 'groups'), ['test'])
+    assert_equal(gemset.dig('rails', 'groups'), ['default'])
   end
 
 
