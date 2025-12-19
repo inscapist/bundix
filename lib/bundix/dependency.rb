@@ -22,7 +22,7 @@ def parse_gemfiles(gemfile, lockfile)
   end
 
   lock.specs.each do |spec|
-    deps[spec.name] ||= Dependency.new(spec.name, nil, {})
+    deps[spec.name] ||= Dependency.new(spec.name, nil, { 'group' => [] })
   end
 
   loop do
@@ -37,10 +37,10 @@ def parse_gemfiles(gemfile, lockfile)
                   "Gem dependency '#{name}' not specified in #{lockfile}"
           end
 
-          deps[name] = Dependency.new(name, lock.bundler_version, {})
+          deps[name] = Dependency.new(name, lock.bundler_version, { 'group' => [] })
         end
 
-        unless !((as_dep.groups - cached.groups) - [:default]).empty? || !(as_dep.platforms - cached.platforms).empty?
+        unless !(as_dep.groups - cached.groups).empty? || !(as_dep.platforms - cached.platforms).empty?
           next
         end
 

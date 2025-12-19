@@ -194,7 +194,7 @@
     version = "3.1.7";
   };
   bindex = {
-    groups = ["default" "development"];
+    groups = ["development"];
     platforms = [];
     source = {
       remotes = ["https://rubygems.org"];
@@ -232,7 +232,7 @@
   };
   capybara = {
     dependencies = ["addressable" "matrix" "mini_mime" "nokogiri" "rack" "rack-test" "regexp_parser" "xpath"];
-    groups = ["test"];
+    groups = ["default" "test"];
     platforms = [];
     source = {
       remotes = ["https://rubygems.org"];
@@ -896,7 +896,7 @@
     version = "0.5.1";
   };
   rexml = {
-    groups = ["default" "test"];
+    groups = ["test"];
     platforms = [];
     source = {
       remotes = ["https://rubygems.org"];
@@ -908,7 +908,7 @@
     version = "3.2.6";
   };
   rubyzip = {
-    groups = ["default" "test"];
+    groups = ["test"];
     platforms = [];
     source = {
       remotes = ["https://rubygems.org"];
@@ -1104,7 +1104,7 @@
     version = "1.8.1";
   };
   websocket = {
-    groups = ["default" "test"];
+    groups = ["test"];
     platforms = [];
     source = {
       remotes = ["https://rubygems.org"];
