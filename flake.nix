@@ -1,30 +1,35 @@
 # © 2023 Felix <zen9.felix@gmail.com>
-
 {
-  description =
-    "Generates a Nix expression for your Bundler-managed application";
+  description = "Generates a Nix expression for your Bundler-managed application";
 
-  outputs = { self, nixpkgs, ... }:
-  let
+  outputs = {
+    self,
+    nixpkgs,
+    ...
+  }: let
     eachDefaultSystem = with nixpkgs.lib; let
-      nestInto = name: val: { ${name} = val; };
+      nestInto = name: val: {${name} = val;};
       specialize = block: sys: mapAttrs (_: nestInto sys) (block sys);
       mergeSets = foldl recursiveUpdate {};
       forEachSystem = forEach systems.flakeExposed;
     in
       perSystemBlock: mergeSets (forEachSystem (specialize perSystemBlock));
-
   in
     eachDefaultSystem (system: let
       pkgs = nixpkgs.legacyPackages.${system};
 
-      rubyCurrent = pkgs.ruby_3_3;
+      rubyCurrent = pkgs.ruby_4_0;
 
-      ruby = rubyCurrent.withPackages (ps: with ps; [
-        minitest rake solargraph rubocop pry
-      ]);
+      ruby = rubyCurrent.withPackages (ps:
+        with ps; [
+          minitest
+          rake
+          solargraph
+          rubocop
+          pry
+        ]);
 
-      bundler = pkgs.bundler.override { ruby = rubyCurrent; };
+      bundler = pkgs.bundler.override {ruby = rubyCurrent;};
 
       bundix = pkgs.callPackage ./default.nix {
         ruby = rubyCurrent;
@@ -40,7 +45,7 @@
       };
 
       devShells.default = pkgs.mkShell {
-        buildInputs = [ ruby bundler bundix pkgs.rufo ];
+        buildInputs = [ruby bundler bundix pkgs.rufo];
       };
     });
 }
